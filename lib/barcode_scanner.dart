@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class BarcodeScanner extends StatefulWidget {
-  const BarcodeScanner({super.key});
+  final Function(String?) onBarcodeScanned;
+
+  const BarcodeScanner({super.key, required this.onBarcodeScanned});
 
   @override
   State<BarcodeScanner> createState() => _BarcodeScannerState();
@@ -31,7 +33,10 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
     if (mounted) {
       setState(() {
         _barcode = barcodes.barcodes.firstOrNull;
+        widget.onBarcodeScanned(_barcode?.displayValue);
       });
+      dispose();
+      Navigator.pop(context);
     }
   }
 
