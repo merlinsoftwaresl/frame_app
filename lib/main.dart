@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'barcode_scanner.dart';
 import 'providers/frame_connection_provider.dart';
+import 'screens/frame_configuration_screen.dart';
 
 void main() {
   runApp(
@@ -104,7 +105,7 @@ class MyHomePage extends ConsumerWidget {
                     context,
                     ref,
                     'Configure Frame',
-                    const Placeholder(), // TODO: Implement configuration screen
+                    const FrameConfigurationScreen(),
                   ),
                 ],
               ],
