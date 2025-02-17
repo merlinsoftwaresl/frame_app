@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'barcode_scanner.dart';
 
-String? frameConnectionID;
-
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -46,17 +49,24 @@ class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Frame App: $frameConnectionID')),
+      appBar: AppBar(
+        title: const Text('Frame App'),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      ),
       body: Center(
         child: ListView(
           children: [
             _buildItem(
               context,
               'Scan QR to connect to frame',
-              BarcodeScanner(onBarcodeScanned: (barcode) {
-                frameConnectionID = barcode;
-                print('Scanned Barcode: $frameConnectionID');
-              }),
+              BarcodeScanner(
+                onBarcodeScanned: (String? barcode) {
+                  if (barcode != null) {
+                    // Will be replaced with provider later
+                    print('Scanned Barcode: $barcode');
+                  }
+                },
+              ),
             ),
           ],
         ),
