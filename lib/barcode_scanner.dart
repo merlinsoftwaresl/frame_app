@@ -12,30 +12,38 @@ class BarcodeScanner extends StatefulWidget {
 
 class _BarcodeScannerState extends State<BarcodeScanner> {
   Barcode? _barcode;
+  MobileScannerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController();
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   Widget _buildBarcode(Barcode? value) {
-    if (value == null) {
-      return const Text(
-        'Scan QR in frame display!',
-        overflow: TextOverflow.fade,
-        style: TextStyle(color: Colors.white),
-      );
-    }
-
     return Text(
-      value.displayValue ?? 'No display value.',
+      value?.displayValue ?? 'Scan QR in frame display!',
       overflow: TextOverflow.fade,
       style: const TextStyle(color: Colors.white),
     );
   }
 
   void _handleBarcode(BarcodeCapture barcodes) {
-    if (mounted) {
+    if (!mounted) return;
+    
+    final barcode = barcodes.barcodes.firstOrNull;
+    if (barcode?.displayValue != null) {
       setState(() {
-        _barcode = barcodes.barcodes.firstOrNull;
-        widget.onBarcodeScanned(_barcode?.displayValue);
+        _barcode = barcode;
       });
-      dispose();
+      widget.onBarcodeScanned(barcode?.displayValue);
+      _controller?.dispose();
       Navigator.pop(context);
     }
   }
@@ -43,11 +51,15 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Connect to frame')),
+      appBar: AppBar(
+        title: const Text('Connect to frame'),
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      ),
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           MobileScanner(
+            controller: _controller!,
             onDetect: _handleBarcode,
           ),
           Align(
@@ -59,7 +71,11 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Expanded(child: Center(child: _buildBarcode(_barcode))),
+                  Expanded(
+                    child: Center(
+                      child: _buildBarcode(_barcode),
+                    ),
+                  ),
                 ],
               ),
             ),
