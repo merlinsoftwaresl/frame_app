@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'barcode_scanner.dart';
-import 'providers/frame_connection_provider.dart';
-import 'screens/frame_configuration_screen.dart';
+import 'presentation/barcode_scanner_screen.dart';
+import 'data/connection_provider.dart';
+import 'presentation/configuration_screen.dart';
 
 void main() {
   runApp(
@@ -90,7 +90,7 @@ class MyHomePage extends ConsumerWidget {
                   connectionId == null 
                       ? 'Scan QR to connect to frame'
                       : 'Rescan QR code',
-                  BarcodeScanner(
+                  BarcodeScannerScreen(
                     onBarcodeScanned: (String? barcode) {
                       if (barcode != null) {
                         ref.read(frameConnectionProvider.notifier).setConnectionId(barcode);

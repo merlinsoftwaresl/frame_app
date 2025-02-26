@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/frame_connection_provider.dart';
-import '../services/frame_api_service.dart';
+import 'package:frame_app/data/connection_provider.dart';
+import 'package:frame_app/application/api_service.dart';
 
 class FrameConfigurationScreen extends ConsumerStatefulWidget {
   const FrameConfigurationScreen({super.key});
