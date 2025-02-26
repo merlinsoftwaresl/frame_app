@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'presentation/barcode_scanner_screen.dart';
+import 'package:flutter/cupertino.dart';
+
 import 'data/connection_provider.dart';
+import 'presentation/barcode_scanner_screen.dart';
+import 'presentation/mdns_discovery_screen.dart';
 import 'presentation/configuration_screen.dart';
 
 void main() {
   runApp(
-    const ProviderScope(
+    ProviderScope(
       child: MyApp(),
     ),
   );
@@ -20,7 +23,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Frame App',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+        ),
         useMaterial3: true,
       ),
       home: const MyHomePage(),
@@ -31,31 +36,13 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends ConsumerWidget {
   const MyHomePage({super.key});
 
-  Widget _buildItem(BuildContext context, WidgetRef ref, String label, Widget page) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => page,
-              ),
-            );
-          },
-          child: Text(label),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final connectionId = ref.watch(frameConnectionProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Frame App'),
+        title: const Text('Frame Companion'),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       body: Column(
@@ -63,55 +50,123 @@ class MyHomePage extends ConsumerWidget {
           // Connection status bar
           if (connectionId != null)
             Container(
-              color: Colors.green.withValues(alpha: 0.1),
-              padding: const EdgeInsets.all(8.0),
+              color: Colors.green.shade100,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Connected to: $connectionId',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Expanded(
+                    child: Text(
+                      'Connected to: $connectionId',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: Colors.black54),
                     onPressed: () {
-                      ref.read(frameConnectionProvider.notifier).clearConnection();
+                      ref
+                          .read(frameConnectionProvider.notifier)
+                          .clearConnection();
                     },
                   ),
                 ],
               ),
             ),
           Expanded(
-            child: ListView(
-              children: [
-                _buildItem(
-                  context,
-                  ref,
-                  connectionId == null 
-                      ? 'Scan QR to connect to frame'
-                      : 'Rescan QR code',
-                  BarcodeScannerScreen(
-                    onBarcodeScanned: (String? barcode) {
-                      if (barcode != null) {
-                        ref.read(frameConnectionProvider.notifier).setConnectionId(barcode);
-                      }
-                    },
-                  ),
-                ),
-                if (connectionId != null) ...[
-                  // Add more buttons/features that are only available when connected
-                  _buildItem(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 16),
+
+                  // Main action buttons
+                  _buildActionButton(
                     context,
-                    ref,
-                    'Configure Frame',
-                    const FrameConfigurationScreen(),
+                    'Discover Frames in Network',
+                    Icons.wifi_find,
+                    const FrameDiscoveryScreen(),
                   ),
+                  const SizedBox(height: 16),
+                  _buildActionButton(
+                    context,
+                    connectionId == null
+                        ? 'Scan QR to Connect to Frame'
+                        : 'Rescan QR Code',
+                    Icons.qr_code_scanner,
+                    BarcodeScannerScreen(
+                      onBarcodeScanned: (String? barcode) {
+                        if (barcode != null) {
+                          ref
+                              .read(frameConnectionProvider.notifier)
+                              .setConnectionId(barcode);
+                        }
+                      },
+                    ),
+                  ),
+
+                  // Configuration button (only when connected)
+                  if (connectionId != null) ...[
+                    const SizedBox(height: 16),
+                    _buildActionButton(
+                      context,
+                      'Configure Frame',
+                      Icons.settings,
+                      const FrameConfigurationScreen(),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildActionButton(
+      BuildContext context, String label, IconData icon, Widget page) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.of(context).push(
+          SlidePageRoute(
+            builder: (context) => page,
+          ),
+        );
+      },
+      icon: Icon(icon),
+      label: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class SlidePageRoute<T> extends PageRouteBuilder<T> {
+  final Widget Function(BuildContext) builder;
+
+  SlidePageRoute({required this.builder})
+      : super(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              builder(context),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+            return SlideTransition(
+              position: animation.drive(tween),
+              child: child,
+            );
+          },
+        );
 }
